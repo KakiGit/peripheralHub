@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"reflect"
 	"syscall"
 )
 
@@ -37,19 +38,49 @@ const (
 	INPUT_KEYBOARD = 1
 )
 
+func CallFunc(funcPointer uintptr, rawArgs ...uintptr) (r1, r2 uintptr, err syscall.Errno) {
+	nargs := len(rawArgs)
+	var args []reflect.Value
+	args = append(args, reflect.ValueOf(funcPointer))
+	args = append(args, reflect.ValueOf(uintptr(nargs)))
+	for _, x := range rawArgs {
+		args = append(args, reflect.ValueOf(x))
+	}
+	var sysc reflect.Value
+	fillCount := 0
+	switch {
+	case nargs <= 3:
+		sysc = reflect.ValueOf(syscall.Syscall)
+		fillCount = 3 - nargs
+	case nargs <= 6:
+		sysc = reflect.ValueOf(syscall.Syscall6)
+		fillCount = 6 - nargs
+	case nargs <= 9:
+		sysc = reflect.ValueOf(syscall.Syscall9)
+		fillCount = 9 - nargs
+	case nargs <= 12:
+		sysc = reflect.ValueOf(syscall.Syscall12)
+		fillCount = 12 - nargs
+	case nargs <= 15:
+		sysc = reflect.ValueOf(syscall.Syscall15)
+		fillCount = 15 - nargs
+	case nargs <= 18:
+		sysc = reflect.ValueOf(syscall.Syscall18)
+		fillCount = 18 - nargs
+	}
+	for fillCount > 0 {
+		args = append(args, reflect.ValueOf(uintptr(0)))
+		fillCount--
+	}
+	result := sysc.Call(args)
+	r1 = result[0].Interface().(uintptr)
+	r2 = result[1].Interface().(uintptr)
+	err = result[2].Interface().(syscall.Errno)
+	return
+}
+
 func SetCursorPos(x, y uintptr) (result int) {
-	var nargs uintptr = 2
-	ret, _, callErr := syscall.Syscall9(uintptr(setCursorPos),
-		nargs,
-		x,
-		y,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0)
+	ret, _, callErr := CallFunc(setCursorPos, x, y)
 	if callErr != 0 {
 		abort("Call SetCursorPos", callErr)
 	}
