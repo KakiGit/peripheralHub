@@ -67,6 +67,8 @@ func CallFunc(funcPointer uintptr, rawArgs ...uintptr) (r1, r2 uintptr, err sysc
 	case nargs <= 18:
 		sysc = reflect.ValueOf(syscall.Syscall18)
 		fillCount = 18 - nargs
+	default:
+		panic(fmt.Sprintf("%s", "too many arguments"))
 	}
 	for fillCount > 0 {
 		args = append(args, reflect.ValueOf(uintptr(0)))
