@@ -1,10 +1,13 @@
 package common
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/gob"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/scrypt"
@@ -31,7 +34,7 @@ func ReadKey(encodedPwd string) []byte {
 	return key
 }
 
-func Encrypt(msg []byte, key []byte) []byte {
+func Encrypt(msg Message, key []byte) []byte {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -45,7 +48,7 @@ func Encrypt(msg []byte, key []byte) []byte {
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		panic(err.Error())
 	}
-	ciphertext := aesgcm.Seal(nil, nonce, msg, nil)
+	ciphertext := aesgcm.Seal(nil, nonce, EncodeMessage(msg), nil)
 
 	var encryptedMsg []byte
 	encryptedMsg = append(encryptedMsg, nonce...)
@@ -54,7 +57,7 @@ func Encrypt(msg []byte, key []byte) []byte {
 	return []byte(ret)
 }
 
-func Decrypt(encryptedMsg []byte, key []byte) []byte {
+func Decrypt(encryptedMsg []byte, key []byte) Message {
 	msg, err := base64.StdEncoding.DecodeString(string(encryptedMsg))
 	if err != nil {
 		panic(err.Error())
@@ -72,5 +75,28 @@ func Decrypt(encryptedMsg []byte, key []byte) []byte {
 	if err != nil {
 		panic(err.Error())
 	}
-	return decrptedMsg
+
+	return DecodeMessage(decrptedMsg)
+}
+
+func EncodeMessage(msg Message) []byte {
+	var encodedMsg bytes.Buffer
+	enc := gob.NewEncoder(&encodedMsg)
+	err := enc.Encode(msg)
+	if err != nil {
+		fmt.Println(err)
+		return []byte{}
+	}
+	return encodedMsg.Bytes()
+}
+
+func DecodeMessage(msg []byte) Message {
+	dec := gob.NewDecoder(bytes.NewReader(msg))
+	var decodedMsg Message
+	err := dec.Decode(&decodedMsg)
+	if err != nil {
+		fmt.Println(err)
+		return Message{}
+	}
+	return decodedMsg
 }
