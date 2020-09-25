@@ -27,27 +27,27 @@ type mouseCursor struct {
 
 func getKeyboardEvent(event Event) uintptr {
 	return map[Event]uintptr{
-		KeyboardButtonDown: 0x0000,
-		KeyboardButtonUp:   0x0002,
+		ButtonDown: 0x0000,
+		ButtonUp:   0x0002,
 	}[event]
 }
 
 func getMouseEventID(button EventEntity, event Event) uintptr {
 	return map[EventEntity]map[Event]uintptr{
 		MouseLeftButton: map[Event]uintptr{
-			MouseButtonDown:  0x0002,
-			MouseButtonUp:    0x0004,
-			MouseButtonClick: 0x0006,
+			ButtonDown:  0x0002,
+			ButtonUp:    0x0004,
+			ButtonClick: 0x0006,
 		},
 		MouseRightButton: map[Event]uintptr{
-			MouseButtonDown:  0x0008,
-			MouseButtonUp:    0x0010,
-			MouseButtonClick: 0x0018,
+			ButtonDown:  0x0008,
+			ButtonUp:    0x0010,
+			ButtonClick: 0x0018,
 		},
 		MouseMiddleButton: map[Event]uintptr{
-			MouseButtonDown:  0x0020,
-			MouseButtonUp:    0x0040,
-			MouseButtonClick: 0x0060,
+			ButtonDown:  0x0020,
+			ButtonUp:    0x0040,
+			ButtonClick: 0x0060,
 		},
 		MouseWheel: map[Event]uintptr{
 			MouseWheelScroll: 0x0800,
@@ -176,12 +176,12 @@ func MouseButtonAction(button EventEntity, event Event) {
 }
 
 func KeyHold(keyCode uintptr) uintptr {
-	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(KeyboardButtonDown), 0)
+	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(ButtonDown), 0)
 	return ret
 }
 
 func KeyRelease(keyCode uintptr) uintptr {
-	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(KeyboardButtonUp), 0)
+	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(ButtonUp), 0)
 	return ret
 }
 

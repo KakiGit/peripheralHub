@@ -30,9 +30,9 @@ func TestScroll(t *testing.T) {
 }
 
 func TestMouseClick(t *testing.T) {
-	MouseButtonAction(MouseLeftButton, MouseButtonDown)
+	MouseButtonAction(MouseLeftButton, ButtonDown)
 	time.Sleep(time.Second * 2)
-	MouseButtonAction(MouseLeftButton, MouseButtonUp)
+	MouseButtonAction(MouseLeftButton, ButtonUp)
 }
 
 func TestMouseMove(t *testing.T) {

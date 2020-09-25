@@ -13,11 +13,9 @@ type Message struct {
 }
 
 const (
-	KeyboardButtonDown Event = iota
-	KeyboardButtonUp
-	MouseButtonDown
-	MouseButtonUp
-	MouseButtonClick
+	ButtonDown Event = iota
+	ButtonUp
+	ButtonClick
 	MouseRelativeMove
 	MouseAbsoluteMove
 	MouseWheelScroll
