@@ -13,8 +13,8 @@ type Message struct {
 }
 
 const (
-	ButtonDown Event = iota
-	ButtonUp
+	KeyboardButtonDown Event = iota
+	KeyboardButtonUp
 	MouseButtonDown
 	MouseButtonUp
 	MouseButtonClick
