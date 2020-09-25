@@ -15,14 +15,12 @@ type Message struct {
 const (
 	ButtonDown Event = iota
 	ButtonUp
-	MouseLeftDown
-	MouseLeftUp
-	MouseRightDown
-	MouseRightUp
-	MouseMiddleDown
-	MouseMiddleUp
-	MouseMoveAbsolute
-	MouseMoveRelative
+	MouseButtonDown
+	MouseButtonUp
+	MouseButtonClick
+	MouseRelativeMove
+	MouseAbsoluteMove
+	MouseWheelScroll
 )
 
 // ISO keyboard layout is implemented for now
@@ -32,8 +30,8 @@ const (
 	MouseMiddleButton
 	MouseOptButton1
 	MouseOptButton2
-	MouseScrollUp
-	MouseScrollDown
+	MouseWheel
+	MouseCursor
 	KeyVolumeMute
 	KeyVolumeUp
 	KeyVolumeDown

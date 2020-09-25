@@ -43,6 +43,34 @@ const (
 	KEYEVENTF_KEYUP   = 0x0002
 )
 
+func getMouseEventID(button EventEntity, event Event) uintptr {
+	return func(button EventEntity, event Event) uintptr {
+		return map[EventEntity]map[Event]uintptr{
+			MouseLeftButton: map[Event]uintptr{
+				MouseButtonDown:  0x0002,
+				MouseButtonUp:    0x0004,
+				MouseButtonClick: 0x0006,
+			},
+			MouseRightButton: map[Event]uintptr{
+				MouseButtonDown:  0x0008,
+				MouseButtonUp:    0x0010,
+				MouseButtonClick: 0x0018,
+			},
+			MouseMiddleButton: map[Event]uintptr{
+				MouseButtonDown:  0x0020,
+				MouseButtonUp:    0x0040,
+				MouseButtonClick: 0x0060,
+			},
+			MouseWheel: map[Event]uintptr{
+				MouseWheelScroll: 0x0800,
+			},
+			MouseCursor: map[Event]uintptr{
+				MouseRelativeMove: 0x0001,
+			},
+		}[button][event]
+	}(button, event)
+}
+
 func getKeyValue(key EventEntity) uintptr {
 	if key >= Key0 && key <= Key9 {
 		char := (key - Key0) + 48
@@ -147,54 +175,18 @@ func SetCursorPos(x, y uintptr) uintptr {
 }
 
 func MouseMove(x, y int) {
-	mouseEvent.Call(MOUSEEVENTF_MOVE, uintptr(x), uintptr(y), 0)
+	mouseEvent.Call(getMouseEventID(MouseCursor, MouseRelativeMove), uintptr(x), uintptr(y), 0)
 }
 
 func MouseScroll(lines int) {
 	x, y := GetCursorPos()
 	fmt.Println(x, y)
-	mouseEvent.Call(MOUSEEVENTF_WHEEL, uintptr(x), uintptr(y), uintptr(lines))
+	mouseEvent.Call(getMouseEventID(MouseWheel, MouseWheelScroll), uintptr(x), uintptr(y), uintptr(lines))
 }
 
-func MouseRelease(button EventEntity) {
+func MouseButtonAction(button EventEntity, event Event) {
 	x, y := GetCursorPos()
-	var eventID uintptr
-	switch button {
-	case MouseLeftButton:
-		eventID = MOUSEEVENTF_LEFTUP
-	case MouseRightButton:
-		eventID = MOUSEEVENTF_RIGHTUP
-	case MouseMiddleButton:
-		eventID = MOUSEEVENTF_MIDDLEUP
-	}
-	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
-}
-
-func MouseHold(button EventEntity) {
-	x, y := GetCursorPos()
-	var eventID uintptr
-	switch button {
-	case MouseLeftButton:
-		eventID = MOUSEEVENTF_LEFTDOWN
-	case MouseRightButton:
-		eventID = MOUSEEVENTF_RIGHTDOWN
-	case MouseMiddleButton:
-		eventID = MOUSEEVENTF_MIDDLEDOWN
-	}
-	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
-}
-
-func MouseClick(button EventEntity) {
-	x, y := GetCursorPos()
-	var eventID uintptr
-	switch button {
-	case MouseLeftButton:
-		eventID = MOUSEEVENTF_LEFTCLICK
-	case MouseRightButton:
-		eventID = MOUSEEVENTF_RIGHTCLICK
-	case MouseMiddleButton:
-		eventID = MOUSEEVENTF_MIDDLECLICK
-	}
+	eventID := getMouseEventID(button, event)
 	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
 }
 
