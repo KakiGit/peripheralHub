@@ -3,14 +3,23 @@ package common
 type Address string
 type Secret string
 type Device string
+type Platform int
 type Event byte
 type EventEntity byte
 type Message struct {
-	Sender      [4]byte
-	Receiver    [4]byte
-	Event       Event
-	EventEntity EventEntity
+	SenderAddress    [4]byte
+	SenderPlatform   Platform
+	ReceiverAddress  [4]byte
+	ReceiverPlatform Platform
+	Event            Event
+	EventEntity      EventEntity
 }
+
+const (
+	Linux Platform = iota
+	Windows
+	Darwin
+)
 
 const (
 	ButtonDown Event = iota
