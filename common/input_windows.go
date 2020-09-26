@@ -156,9 +156,8 @@ func GetScreenSize() (uintptr, uintptr) {
 	return width, heigh
 }
 
-func SetCursorPos(x, y uintptr) uintptr {
-	ret, _, _ := setCursorPos.Call(x, y)
-	return ret
+func SetCursorPos(x, y uintptr) {
+	setCursorPos.Call(x, y)
 }
 
 func MouseMove(x, y int) {
@@ -177,14 +176,12 @@ func MouseButtonAction(button EventEntity, event Event) {
 	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
 }
 
-func KeyHold(keyCode uintptr) uintptr {
-	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(ButtonDown), 0)
-	return ret
+func KeyHold(key EventEntity) {
+	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonDown), 0)
 }
 
-func KeyRelease(keyCode uintptr) uintptr {
-	ret, _, _ := keybdEvent.Call(keyCode, 0, getKeyboardEvent(ButtonUp), 0)
-	return ret
+func KeyRelease(key EventEntity) {
+	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonUp), 0)
 }
 
 func init() {
