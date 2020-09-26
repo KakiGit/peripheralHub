@@ -28,8 +28,8 @@ func getKeyboardEvent(event Event) int {
 
 func getMouseEvent(event Event) int {
 	return map[Event]int{
-		ButtonDown: KeyPress,
-		ButtonUp:   KeyRelease,
+		ButtonDown: ButtonPress,
+		ButtonUp:   ButtonRelease,
 	}[event]
 }
 
@@ -116,6 +116,7 @@ func getKeyValue(display *Display, key EventEntity) uint {
 			KeyRCtrl:         XKeysymToKeycode(display, XStringToKeysym(string("Control_R"))),
 			KeyLAlt:          XKeysymToKeycode(display, XStringToKeysym(string("Alt_L"))),
 			KeyRAlt:          XKeysymToKeycode(display, XStringToKeysym(string("Alt_R"))),
+			KeyTilde:         XKeysymToKeycode(display, XStringToKeysym(string("grave"))),
 			// KeyVolumeMute:    XKeysymToKeycode(display, XStringToKeysym(string("backspace"))),
 			// KeyVolumeDown:    XKeysymToKeycode(display, XStringToKeysym(string("backspace"))),
 			// KeyVolumeUp:      XKeysymToKeycode(display, XStringToKeysym(string("backspace"))),
@@ -157,7 +158,7 @@ func (input *Input) MouseScroll(lines int) {
 }
 
 func (input *Input) MouseButtonAction(button EventEntity, event Event) {
-	eventID := getMouseEvent(event)
+	eventID := getKeyboardEvent(event)
 	fmt.Println(eventID)
 	keycode := getMouseButtonId(button)
 	fmt.Println(keycode)
