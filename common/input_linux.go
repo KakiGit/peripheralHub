@@ -145,7 +145,7 @@ func (input *Input) MouseMove(x, y int) {
 
 func (input *Input) MouseScroll(lines int) {
 	var keycode uint
-	if lines < 0 {
+	if lines > 0 {
 		keycode = 4
 	} else {
 		keycode = 5
