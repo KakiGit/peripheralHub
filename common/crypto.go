@@ -16,7 +16,7 @@ import (
 const nonceSize = 12
 const saltSize = 32
 
-func CreateEncodedKey(password string) string {
+func CreateEncodedSecret(password string) string {
 	salt := make([]byte, saltSize)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		panic(err.Error())
@@ -26,7 +26,7 @@ func CreateEncodedKey(password string) string {
 	return encodedPwd
 }
 
-func ReadKey(encodedPwd string) []byte {
+func ReadSecret(encodedPwd string) []byte {
 	key, err := base64.StdEncoding.DecodeString(string(encodedPwd))
 	if err != nil {
 		panic(err.Error())
