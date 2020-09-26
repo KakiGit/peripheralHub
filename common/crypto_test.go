@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,9 +10,9 @@ import (
 
 func TestCrypto(t *testing.T) {
 	secret := "topSecret"
-	encodedPwd := CreateEncodedKey(secret)
+	encodedPwd := CreateEncodedSecret(secret)
 	fmt.Println(encodedPwd)
-	key := ReadKey(encodedPwd)
+	key := ReadSecret(encodedPwd)
 	msgs := []Message{}
 	for i := 0; i <= 255; i++ {
 		for j := 0; j <= 255; j++ {
@@ -24,15 +25,26 @@ func TestCrypto(t *testing.T) {
 			msgs = append(msgs, nMsg)
 		}
 	}
+	var wg sync.WaitGroup
+	c := make(chan int, 10)
 	for i := 0; i < 30; i++ {
 		for _, msg := range msgs {
-			encryptedMsg := Encrypt(msg, key)
-			decryptedMsg := Decrypt(encryptedMsg, key)
-			if !cmp.Equal(decryptedMsg, msg) {
-				t.Logf("secret: %s\nkey: %x\nmsg: %v\nencryptedMsg: %x\ndecrypted: %v\n",
-					secret, key, msg, encryptedMsg, decryptedMsg)
-				t.Failed()
-			}
+			c <- 1
+			go func(wg *sync.WaitGroup, c chan int, msg Message, key []byte) {
+				wg.Add(1)
+				encryptedMsg := Encrypt(msg, key)
+				decryptedMsg := Decrypt(encryptedMsg, key)
+				if !cmp.Equal(decryptedMsg, msg) {
+					t.Logf("secret: %s\nkey: %x\nmsg: %v\nencryptedMsg: %x\ndecrypted: %v\n",
+						secret, key, msg, encryptedMsg, decryptedMsg)
+					t.Failed()
+				}
+				<-c
+				wg.Done()
+			}(&wg, c, msg, key)
 		}
+		fmt.Println("running loop", i)
 	}
+	wg.Wait()
+	fmt.Println("total of", len(msgs)*30)
 }
