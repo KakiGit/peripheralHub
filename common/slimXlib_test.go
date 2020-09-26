@@ -5,6 +5,7 @@ package common
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestXlib(t *testing.T) {
@@ -22,5 +23,13 @@ func TestXlib(t *testing.T) {
 		keystring := XKeysymToString(keysym)
 		fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
 	}
+	XTestFakeButtonEvent(display, 0x1, KeyPress, 0)
+	time.Sleep(2 * time.Second)
+	XTestFakeButtonEvent(display, 0x1, KeyRelease, 0)
+
+	XTestFakeMotionEvent(display, 0, 100, 100, 0)
+	time.Sleep(2 * time.Second)
+
+	XTestFakeRelativeMotionEvent(display, 100, 100, 0)
 	XTestGrabControl(display, False)
 }
