@@ -69,7 +69,7 @@ func FakeKeyEvent(display *Display, keycode uint, eventType int, delay int) {
 	case KeyRelease:
 		eventtype = False
 	}
-	C.XTestFakeKeyEvent((*C.Display)(display), C.uint(keycode), eventtype, 0)
+	C.XTestFakeKeyEvent((*C.Display)(display), C.uint(keycode), eventtype, C.ulong(delay))
 	XSync(display)
 }
 
@@ -81,7 +81,7 @@ func XTestFakeButtonEvent(display *Display, keycode uint, eventType int, delay i
 	case KeyRelease:
 		eventtype = False
 	}
-	C.XTestFakeButtonEvent((*C.Display)(display), C.uint(keycode), eventtype, 0)
+	C.XTestFakeButtonEvent((*C.Display)(display), C.uint(keycode), eventtype, C.ulong(delay))
 	XSync(display)
 }
 
