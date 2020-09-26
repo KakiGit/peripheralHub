@@ -50,9 +50,13 @@ const (
 	False             = C.False
 )
 
+func XSync(display *Display) {
+	C.XSync((*C.Display)(display), False)
+}
+
 func XTestGrabControl(display *Display, onOff int) {
 	if onOff == False {
-		C.XSync((*C.Display)(display), False)
+		XSync(display)
 	}
 	C.XTestGrabControl((*C.Display)(display), C.int(onOff))
 }
@@ -66,6 +70,29 @@ func FakeKeyEvent(display *Display, keycode uint, eventType int, delay int) {
 		eventtype = False
 	}
 	C.XTestFakeKeyEvent((*C.Display)(display), C.uint(keycode), eventtype, 0)
+	XSync(display)
+}
+
+func XTestFakeButtonEvent(display *Display, keycode uint, eventType int, delay int) {
+	var eventtype C.int
+	switch eventType {
+	case KeyPress:
+		eventtype = True
+	case KeyRelease:
+		eventtype = False
+	}
+	C.XTestFakeButtonEvent((*C.Display)(display), C.uint(keycode), eventtype, 0)
+	XSync(display)
+}
+
+func XTestFakeMotionEvent(display *Display, screen int, x, y int, delay uint64) {
+	C.XTestFakeMotionEvent((*C.Display)(display), C.int(screen), C.int(x), C.int(y), C.ulong(delay))
+	XSync(display)
+}
+
+func XTestFakeRelativeMotionEvent(display *Display, x, y int, delay uint64) {
+	C.XTestFakeRelativeMotionEvent((*C.Display)(display), C.int(x), C.int(y), C.ulong(delay))
+	XSync(display)
 }
 
 func XKeycodeToKeysym(display *Display, keycode uint) uint64 {
@@ -90,6 +117,10 @@ func XOpenDisplay() *Display {
 
 func XDefaultRootWindow(display *Display) Window {
 	return (Window)(C.XDefaultRootWindow((*C.Display)(display)))
+}
+
+func DefaultScreen(display *Display) int {
+	return int(C.XDefaultScreen((*C.Display)(display)))
 }
 
 func XGrabPointer(display *Display, window Window) {
