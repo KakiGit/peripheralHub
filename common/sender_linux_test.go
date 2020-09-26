@@ -7,5 +7,11 @@ import (
 )
 
 func TestSender(t *testing.T) {
-	ListenXEvent()
+	com := make(chan InternalMsg, 100)
+	go func() {
+		for {
+			<-com
+		}
+	}()
+	ListenXEvent(com)
 }
