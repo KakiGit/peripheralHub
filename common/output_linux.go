@@ -136,9 +136,15 @@ func (output *Output) Init() {
 }
 
 func (output *Output) OutputToServer() {
+	var event XEvent
+	xReset := 250
+	yReset := 200
 	XGrabPointer(output.display, output.root)
 	XGrabKeyboard(output.display, output.root)
-	var event XEvent
+	XTestGrabControl(output.display, True)
+	XTestFakeMotionEvent(output.display, 0, xReset, yReset, 0)
+	XNextEvent(output.display, &event)
+	XTestGrabControl(output.display, False)
 	for {
 		XNextEvent(output.display, &event)
 		eventType := GetXEventType(&event)
@@ -174,10 +180,19 @@ func (output *Output) OutputToServer() {
 			}
 		case MotionNotify:
 			x, y := GetCursorPosition(&event)
+			if x == xReset && y == yReset {
+				x = x + 1
+				y = y + 1
+			}
+			XTestGrabControl(output.display, True)
+			XTestFakeMotionEvent(output.display, 0, xReset, yReset, 0)
+			var tE XEvent
+			XNextEvent(output.display, &tE)
+			XTestGrabControl(output.display, False)
 			output.Com <- InternalMsg{
 				EventEntity: MouseCursor,
 				Event:       MouseRelativeMove,
-				ExtraInfo:   [4]int{x, y},
+				ExtraInfo:   [4]int{x - xReset, y - yReset},
 			}
 		}
 	}

@@ -6,11 +6,10 @@ import "testing"
 
 func TestOutput(t *testing.T) {
 	output := Output{}
-	com := make(chan InternalMsg, 100)
-	go func() {
+	go func(com chan InternalMsg) {
 		for {
 			<-com
 		}
-	}()
-	output.OutputToServer(com)
+	}(output.Com)
+	output.OutputToServer()
 }

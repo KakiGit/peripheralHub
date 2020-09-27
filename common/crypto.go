@@ -19,7 +19,7 @@ const saltSize = 32
 func CreateEncodedSecret(password Secret) Secret {
 	salt := make([]byte, saltSize)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	key, _ := scrypt.Key([]byte(password), salt, 32768, 8, 1, 32)
 	encodedPwd := base64.StdEncoding.EncodeToString(key)
@@ -29,7 +29,7 @@ func CreateEncodedSecret(password Secret) Secret {
 func ReadSecret(encodedPwd Secret) []byte {
 	key, err := base64.StdEncoding.DecodeString(string(encodedPwd))
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	return key
 }
@@ -38,15 +38,15 @@ func Encrypt(msg Message, key []byte) []byte {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	nonce := make([]byte, nonceSize)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	ciphertext := aesgcm.Seal(nil, nonce, EncodeMessage(msg), nil)
 
@@ -60,20 +60,20 @@ func Encrypt(msg Message, key []byte) []byte {
 func Decrypt(encryptedMsg []byte, key []byte) Message {
 	msg, err := base64.StdEncoding.DecodeString(string(encryptedMsg))
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 	nonce := msg[:nonceSize]
 	decrptedMsg, err := aesgcm.Open(nil, nonce, msg[nonceSize:], nil)
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err)
 	}
 
 	return DecodeMessage(decrptedMsg)

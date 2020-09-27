@@ -37,12 +37,12 @@ func AddressToBytes(address Address) [4]byte {
 }
 
 func BytesToAddress(addressBytes [4]byte) Address {
-	var addr Address
+	var addr string
 	for _, partByte := range addressBytes {
 		part := strconv.Itoa(int(partByte))
-		addr += Address(part)
+		addr += part + "."
 	}
-	return addr
+	return Address(strings.Trim(addr, "."))
 }
 
 type InternalMsg struct {
