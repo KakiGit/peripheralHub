@@ -8,6 +8,9 @@ import (
 	"unsafe"
 )
 
+type Input struct {
+}
+
 func abort(funcname string, err error) {
 	panic(fmt.Sprintf("%s failed: %v", funcname, err))
 }
@@ -144,43 +147,43 @@ func getKeyValue(key EventEntity) uintptr {
 	}
 }
 
-func GetCursorPos() (int, int) {
+func (input *Input) GetCursorPos() (int, int) {
 	cursor := mouseCursor{}
 	getCursorPos.Call(uintptr(unsafe.Pointer(&cursor)))
 	return cursor.x, cursor.y
 }
 
-func GetScreenSize() (uintptr, uintptr) {
+func (input *Input) GetScreenSize() (uintptr, uintptr) {
 	width, _, _ := getSystemMetrics.Call(0)
 	heigh, _, _ := getSystemMetrics.Call(1)
 	return width, heigh
 }
 
-func SetCursorPos(x, y uintptr) {
+func (input *Input) SetCursorPos(x, y uintptr) {
 	setCursorPos.Call(x, y)
 }
 
-func MouseMove(x, y int) {
+func (input *Input) MouseMove(x, y int) {
 	mouseEvent.Call(getMouseEventID(MouseCursor, MouseRelativeMove), uintptr(x), uintptr(y), 0)
 }
 
-func MouseScroll(lines int) {
-	x, y := GetCursorPos()
+func (input *Input) MouseScroll(lines int) {
+	x, y := input.GetCursorPos()
 	fmt.Println(x, y)
 	mouseEvent.Call(getMouseEventID(MouseWheel, MouseWheelScroll), uintptr(x), uintptr(y), uintptr(lines))
 }
 
-func MouseButtonAction(button EventEntity, event Event) {
-	x, y := GetCursorPos()
+func (input *Input) MouseButtonAction(button EventEntity, event Event) {
+	x, y := input.GetCursorPos()
 	eventID := getMouseEventID(button, event)
 	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
 }
 
-func KeyHold(key EventEntity) {
+func (input *Input) KeyHold(key EventEntity) {
 	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonDown), 0)
 }
 
-func KeyRelease(key EventEntity) {
+func (input *Input) KeyRelease(key EventEntity) {
 	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonUp), 0)
 }
 

@@ -8,27 +8,31 @@ import (
 )
 
 func TestWinInput(t *testing.T) {
-
-	SetCursorPos(2600, 900)
+	input := Input{}
+	input.SetCursorPos(2600, 900)
 }
 
 func TestKeyPress(t *testing.T) {
-	KeyHold(KeyShift)
-	KeyHold(KeyA)
-	KeyRelease(KeyA)
-	KeyRelease(KeyShift)
+	input := Input{}
+	input.KeyHold(KeyShift)
+	input.KeyHold(KeyA)
+	input.KeyRelease(KeyA)
+	input.KeyRelease(KeyShift)
 }
 
 func TestScroll(t *testing.T) {
-	MouseScroll(100)
+	input := Input{}
+	input.MouseScroll(100)
 }
 
 func TestMouseClick(t *testing.T) {
-	MouseButtonAction(MouseLeftButton, ButtonDown)
+	input := Input{}
+	input.MouseButtonAction(MouseLeftButton, ButtonDown)
 	time.Sleep(time.Second * 2)
-	MouseButtonAction(MouseLeftButton, ButtonUp)
+	input.MouseButtonAction(MouseLeftButton, ButtonUp)
 }
 
 func TestMouseMove(t *testing.T) {
-	MouseMove(100, 100)
+	input := Input{}
+	input.MouseMove(100, 100)
 }
