@@ -13,6 +13,7 @@ type mouseCursor struct {
 
 type Input struct {
 	Display *Display
+	com     chan InternalMsg
 }
 
 func abort(funcname string, err error) {
@@ -165,14 +166,52 @@ func (input *Input) MouseButtonAction(button EventEntity, event Event) {
 	XTestFakeButtonEvent(input.Display, keycode, eventID, 0)
 }
 
-func (input *Input) KeyHold(key EventEntity) {
-	FakeKeyEvent(input.Display, getKeyValue(input.Display, key), getKeyboardEvent(ButtonDown), 0)
+func (input *Input) KeyboardButtonAction(button EventEntity, event Event) {
+	FakeKeyEvent(input.Display, getKeyValue(input.Display, button), getKeyboardEvent(event), 0)
 }
 
-func (input *Input) KeyRelease(key EventEntity) {
-	FakeKeyEvent(input.Display, getKeyValue(input.Display, key), getKeyboardEvent(ButtonUp), 0)
+func (input *Input) ButtonAction(button EventEntity, event Event) {
+	if button == MouseLeftButton || button == MouseMiddleButton || button == MouseRightButton {
+		input.MouseButtonAction(button, event)
+	} else {
+		input.KeyboardButtonAction(button, event)
+	}
 }
 
-func (input *Input) init() {
+func (input *Input) Init() {
 	fmt.Print("Starting Up\n")
+	input.Display = XOpenDisplay()
+	com := make(chan InternalMsg, 50)
+	go func(com chan InternalMsg) {
+		XTestGrabControl(input.Display, True)
+		defer XTestGrabControl(input.Display, False)
+		for {
+			internalMsg := <-com
+			event := internalMsg.Event
+			eventEntity := internalMsg.EventEntity
+			switch event {
+			case ButtonDown:
+				input.ButtonAction(eventEntity, event)
+			case ButtonUp:
+				input.ButtonAction(eventEntity, event)
+			case MouseRelativeMove:
+				input.MouseMove(internalMsg.ExtraInfo[0], internalMsg.ExtraInfo[1])
+			case MouseWheelScrollUp:
+				input.MouseScroll(1)
+			case MouseWheelScrollDown:
+				input.MouseScroll(-1)
+			}
+		}
+	}(com)
+}
+
+func (input *Input) InputFromClient(message Message) {
+
+	internalMsg := InternalMsg{
+		EventEntity: message.EventEntity,
+		Event:       message.Event,
+		ExtraInfo:   message.ExtraInfo,
+	}
+	input.com <- internalMsg
+
 }

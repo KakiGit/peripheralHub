@@ -205,7 +205,9 @@ func (input *Input) InputFromClient(message Message) {
 		input.ButtonAction(eventEntity, event)
 	case MouseRelativeMove:
 		input.MouseMove(message.ExtraInfo[0], message.ExtraInfo[1])
-	case MouseWheelScroll:
-		input.MouseScroll(message.ExtraInfo[0])
+	case MouseWheelScrollUp:
+		input.MouseScroll(10)
+	case MouseWheelScrollDown:
+		input.MouseScroll(-10)
 	}
 }

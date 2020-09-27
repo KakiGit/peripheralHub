@@ -5,8 +5,10 @@ package common
 import "fmt"
 
 func getEventFromKeycode(keycode uint, xeventType int) Event {
-	if keycode == 4 || keycode == 5 {
-		return MouseWheelScroll
+	if keycode == 4 {
+		return MouseWheelScrollUp
+	} else if keycode == 5 {
+		return MouseWheelScrollDown
 	}
 	return map[int]Event{
 		ButtonPress:   ButtonDown,

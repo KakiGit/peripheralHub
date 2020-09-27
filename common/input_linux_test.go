@@ -12,10 +12,10 @@ func TestKeyPress(t *testing.T) {
 	display := XOpenDisplay()
 	input.Display = display
 	XTestGrabControl(display, True)
-	input.KeyHold(KeyShift)
-	input.KeyHold(KeyA)
-	input.KeyRelease(KeyA)
-	input.KeyRelease(KeyShift)
+	input.KeyboardButtonAction(KeyShift, ButtonDown)
+	input.KeyboardButtonAction(KeyA, ButtonDown)
+	input.KeyboardButtonAction(KeyA, ButtonUp)
+	input.KeyboardButtonAction(KeyShift, ButtonUp)
 	XTestGrabControl(display, False)
 }
 

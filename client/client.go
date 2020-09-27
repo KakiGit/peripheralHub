@@ -42,7 +42,8 @@ func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes [
 		fmt.Println(err)
 		return
 	}
-
+	input := common.Input{}
+	input.Init()
 	for {
 		buffer := make([]byte, 1024)
 		n, _, err := c.ReadFromUDP(buffer)
@@ -53,7 +54,7 @@ func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes [
 		resp := common.Decrypt(buffer[0:n], secretBytes)
 		fmt.Printf("Reply: %v\n", resp)
 		if resp.SenderAddress == common.AddressToBytes(serverAddress) {
-			common.InputFromClient(resp)
+			input.InputFromClient(resp)
 		}
 	}
 }

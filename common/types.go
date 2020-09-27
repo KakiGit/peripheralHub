@@ -35,6 +35,7 @@ func AddressToBytes(address Address) [4]byte {
 type InternalMsg struct {
 	EventEntity EventEntity
 	Event       Event
+	ExtraInfo   [4]int
 }
 
 const (
@@ -49,7 +50,8 @@ const (
 	ButtonClick
 	MouseRelativeMove
 	MouseAbsoluteMove
-	MouseWheelScroll
+	MouseWheelScrollUp
+	MouseWheelScrollDown
 	ServiceInit
 )
 
