@@ -123,7 +123,7 @@ func getEventEntityFromKeyString(keyString string) EventEntity {
 
 }
 
-func Output(com chan InternalMsg) {
+func OutputToServer(com chan InternalMsg) {
 	display := XOpenDisplay()
 	root := XDefaultRootWindow(display)
 	XGrabPointer(display, root)
@@ -170,7 +170,7 @@ func Output(com chan InternalMsg) {
 			fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
 			fmt.Printf("ButtonRelease %d, 0x%x, %v\n", keycode, keycode, eventType)
 			com <- InternalMsg{
-				EventEntity: getEventEntityFromKeyString(keystring),
+				EventEntity: getEventEntityFromMouseKeycode(keycode),
 				Event:       getEventFromKeycode(keycode, ButtonRelease),
 			}
 		case MotionNotify:

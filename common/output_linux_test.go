@@ -11,5 +11,5 @@ func TestOutput(t *testing.T) {
 			<-com
 		}
 	}()
-	Output(com)
+	OutputToServer(com)
 }
