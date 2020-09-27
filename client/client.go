@@ -55,6 +55,7 @@ func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes [
 		fmt.Printf("Reply: %v\n", resp)
 		if resp.SenderAddress == common.AddressToBytes(serverAddress) {
 			input.InputFromClient(resp)
+			client.Address = common.BytesToAddress(resp.ReceiverAddress)
 		}
 	}
 }

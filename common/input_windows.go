@@ -55,7 +55,8 @@ func getMouseEventID(button EventEntity, event Event) uintptr {
 			ButtonClick: 0x0060,
 		},
 		MouseWheel: map[Event]uintptr{
-			MouseWheelScroll: 0x0800,
+			MouseWheelScrollUp:   0x0800,
+			MouseWheelScrollDown: 0x0800,
 		},
 		MouseCursor: map[Event]uintptr{
 			MouseRelativeMove: 0x0001,
@@ -170,7 +171,7 @@ func (input *Input) MouseMove(x, y int) {
 func (input *Input) MouseScroll(lines int) {
 	x, y := input.GetCursorPos()
 	fmt.Println(x, y)
-	mouseEvent.Call(getMouseEventID(MouseWheel, MouseWheelScroll), uintptr(x), uintptr(y), uintptr(lines))
+	mouseEvent.Call(getMouseEventID(MouseWheel, MouseWheelScrollUp), uintptr(x), uintptr(y), uintptr(lines))
 }
 
 func (input *Input) MouseButtonAction(button EventEntity, event Event) {
