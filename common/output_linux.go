@@ -2,7 +2,11 @@
 
 package common
 
-import "fmt"
+type Output struct {
+	display *Display
+	root    Window
+	Com     chan InternalMsg
+}
 
 func getEventFromKeycode(keycode uint, xeventType int) Event {
 	if keycode == 4 {
@@ -125,62 +129,55 @@ func getEventEntityFromKeyString(keyString string) EventEntity {
 
 }
 
-func OutputToServer(com chan InternalMsg) {
-	display := XOpenDisplay()
-	root := XDefaultRootWindow(display)
-	XGrabPointer(display, root)
-	XGrabKeyboard(display, root)
+func (output *Output) Init() {
+	output.display = XOpenDisplay()
+	output.root = XDefaultRootWindow(output.display)
+	output.Com = make(chan InternalMsg, 50)
+}
+
+func (output *Output) OutputToServer() {
+	XGrabPointer(output.display, output.root)
+	XGrabKeyboard(output.display, output.root)
 	var event XEvent
 	for {
-		XNextEvent(display, &event)
+		XNextEvent(output.display, &event)
 		eventType := GetXEventType(&event)
 		switch eventType {
 		case KeyPress:
 			keycode := GetKeyCode(&event)
-			keysym := XKeycodeToKeysym(display, keycode)
+			keysym := XKeycodeToKeysym(output.display, keycode)
 			keystring := XKeysymToString(keysym)
-			fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
-			fmt.Printf("KeyPress %d, 0x%x, %v\n", keycode, keycode, eventType)
-			com <- InternalMsg{
+
+			output.Com <- InternalMsg{
 				EventEntity: getEventEntityFromKeyString(keystring),
 				Event:       ButtonDown,
 			}
 		case KeyRelease:
 			keycode := GetKeyCode(&event)
-			keysym := XKeycodeToKeysym(display, keycode)
+			keysym := XKeycodeToKeysym(output.display, keycode)
 			keystring := XKeysymToString(keysym)
-			fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
-			fmt.Printf("KeyRelease %d, 0x%x, %v\n", keycode, keycode, eventType)
-			com <- InternalMsg{
+			output.Com <- InternalMsg{
 				EventEntity: getEventEntityFromKeyString(keystring),
 				Event:       ButtonUp,
 			}
 		case ButtonPress:
 			keycode := GetKeyCode(&event)
-			keysym := XKeycodeToKeysym(display, keycode)
-			keystring := XKeysymToString(keysym)
-			fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
-			fmt.Printf("ButtonPress %d, 0x%x, %v\n", keycode, keycode, eventType)
-			com <- InternalMsg{
+			output.Com <- InternalMsg{
 				EventEntity: getEventEntityFromMouseKeycode(keycode),
 				Event:       getEventFromKeycode(keycode, ButtonPress),
 			}
 		case ButtonRelease:
 			keycode := GetKeyCode(&event)
-			keysym := XKeycodeToKeysym(display, keycode)
-			keystring := XKeysymToString(keysym)
-			fmt.Printf("code to string -- keycode: %v, keysym: %v, string: %v\n", keycode, keysym, keystring)
-			fmt.Printf("ButtonRelease %d, 0x%x, %v\n", keycode, keycode, eventType)
-			com <- InternalMsg{
+			output.Com <- InternalMsg{
 				EventEntity: getEventEntityFromMouseKeycode(keycode),
 				Event:       getEventFromKeycode(keycode, ButtonRelease),
 			}
 		case MotionNotify:
 			x, y := GetCursorPosition(&event)
-			fmt.Printf("MotionNotify x:%d, 0x%x y:%d, 0x%x, %v\n", x, x, y, y, eventType)
-			com <- InternalMsg{
+			output.Com <- InternalMsg{
 				EventEntity: MouseCursor,
 				Event:       MouseRelativeMove,
+				ExtraInfo:   [4]int{x, y},
 			}
 		}
 	}

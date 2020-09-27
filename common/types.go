@@ -23,13 +23,26 @@ type Message struct {
 }
 
 func AddressToBytes(address Address) [4]byte {
-	parts := strings.Split(string(address), ".")
+	tmp := string(address)
+	if strings.Contains(tmp, ":") {
+		tmp = strings.Split(tmp, ":")[0]
+	}
+	parts := strings.Split(tmp, ".")
 	ret := [4]byte{}
 	for i, part := range parts {
 		pt, _ := strconv.Atoi(part)
 		ret[i] = byte(pt)
 	}
 	return ret
+}
+
+func BytesToAddress(addressBytes [4]byte) Address {
+	var addr Address
+	for _, partByte := range addressBytes {
+		part := strconv.Itoa(int(partByte))
+		addr += Address(part)
+	}
+	return addr
 }
 
 type InternalMsg struct {
