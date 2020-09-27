@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/kaki/peripheralHub/common"
 )
@@ -12,9 +11,15 @@ func action(msg string) bool {
 	return true
 }
 
-func SyncWithServer(sender common.Sender, receiver common.Receiver) {
+type Client struct {
+	Address  common.Address
+	Secret   common.Secret
+	Platform common.Platform
+}
 
-	s, err := net.ResolveUDPAddr("udp", sender.Address)
+func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes []byte) {
+
+	s, err := net.ResolveUDPAddr("udp", string(client.Address))
 	c, err := net.DialUDP("udp", nil, s)
 	if err != nil {
 		fmt.Println(err)
@@ -24,34 +29,37 @@ func SyncWithServer(sender common.Sender, receiver common.Receiver) {
 	fmt.Printf("The UDP server is %s\n", c.RemoteAddr().String())
 	defer c.Close()
 
-	timeSpan := 500 * time.Millisecond
-	end := time.Now().Add(timeSpan)
+	message := common.Message{
+		SenderAddress:   common.AddressToBytes(client.Address),
+		SenderPlatform:  client.Platform,
+		ReceiverAddress: common.AddressToBytes(serverAddress),
+		Event:           common.ServiceInit,
+		EventEntity:     common.Client,
+	}
+	req := common.Encrypt(message, secretBytes)
+	_, err = c.Write(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	for time.Now().Before(end) {
-
-		text := receiver.Secret
-		data := common.Encrypt(string(text))
-		_, err = c.Write(data)
-
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
+	for {
 		buffer := make([]byte, 1024)
 		n, _, err := c.ReadFromUDP(buffer)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("Reply: %s\n", common.Decrypt(buffer[0:n]))
-		time.Sleep(10 * time.Millisecond)
+		resp := common.Decrypt(buffer[0:n], secretBytes)
+		fmt.Printf("Reply: %v\n", resp)
+		if resp.SenderAddress == common.AddressToBytes(serverAddress) {
+			common.InputFromClient(resp)
+		}
 	}
 }
 
-func Init() {
-	sender := common.Sender{Address: "127.0.0.1:9878"}
-	receiver := common.Receiver{Secret: "receiverSecret"}
+func (client *Client) Init(serverAddress common.Address) {
+	secretBytes := common.ReadSecret(client.Secret)
 
-	SyncWithServer(sender, receiver)
+	client.SyncWithServer(serverAddress, secretBytes)
 }
