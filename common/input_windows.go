@@ -179,14 +179,33 @@ func (input *Input) MouseButtonAction(button EventEntity, event Event) {
 	mouseEvent.Call(eventID, uintptr(x), uintptr(y), 0)
 }
 
-func (input *Input) KeyHold(key EventEntity) {
-	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonDown), 0)
+func (input *Input) KeyboardButtonAction(button EventEntity, event Event) {
+	keybdEvent.Call(getKeyValue(button), 0, getKeyboardEvent(event), 0)
 }
 
-func (input *Input) KeyRelease(key EventEntity) {
-	keybdEvent.Call(getKeyValue(key), 0, getKeyboardEvent(ButtonUp), 0)
+func (input *Input) ButtonAction(button EventEntity, event Event) {
+	if button == MouseLeftButton || button == MouseMiddleButton || button == MouseRightButton {
+		input.MouseButtonAction(button, event)
+	} else {
+		input.KeyboardButtonAction(button, event)
+	}
 }
 
-func init() {
+func (input *Input) Init() {
 	fmt.Print("Starting Up\n")
+}
+
+func (input *Input) InputFromClient(message Message) {
+	event := message.Event
+	eventEntity := message.EventEntity
+	switch event {
+	case ButtonDown:
+		input.ButtonAction(eventEntity, event)
+	case ButtonUp:
+		input.ButtonAction(eventEntity, event)
+	case MouseRelativeMove:
+		input.MouseMove(message.ExtraInfo[0], message.ExtraInfo[1])
+	case MouseWheelScroll:
+		input.MouseScroll(message.ExtraInfo[0])
+	}
 }

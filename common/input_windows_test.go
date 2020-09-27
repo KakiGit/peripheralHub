@@ -14,10 +14,10 @@ func TestWinInput(t *testing.T) {
 
 func TestKeyPress(t *testing.T) {
 	input := Input{}
-	input.KeyHold(KeyShift)
-	input.KeyHold(KeyA)
-	input.KeyRelease(KeyA)
-	input.KeyRelease(KeyShift)
+	input.KeyboardButtonAction(KeyShift, ButtonDown)
+	input.KeyboardButtonAction(KeyA, ButtonDown)
+	input.KeyboardButtonAction(KeyA, ButtonUp)
+	input.KeyboardButtonAction(KeyShift, ButtonUp)
 }
 
 func TestScroll(t *testing.T) {

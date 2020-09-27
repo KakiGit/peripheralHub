@@ -1,5 +1,10 @@
 package common
 
+import (
+	"strconv"
+	"strings"
+)
+
 type Address string
 type Secret string
 type Device string
@@ -14,6 +19,17 @@ type Message struct {
 	ReceiverPlatform Platform
 	Event            Event
 	EventEntity      EventEntity
+	ExtraInfo        [4]int
+}
+
+func AddressToBytes(address Address) [4]byte {
+	parts := strings.Split(string(address), ".")
+	ret := [4]byte{}
+	for i, part := range parts {
+		pt, _ := strconv.Atoi(part)
+		ret[i] = byte(pt)
+	}
+	return ret
 }
 
 type InternalMsg struct {
@@ -34,6 +50,7 @@ const (
 	MouseRelativeMove
 	MouseAbsoluteMove
 	MouseWheelScroll
+	ServiceInit
 )
 
 // ISO keyboard layout is implemented for now
@@ -153,4 +170,6 @@ const (
 	KeyNumPadAdd
 	KeyNumPadSub
 	KeyNumPadDecimal
+	Client
+	Server
 )
