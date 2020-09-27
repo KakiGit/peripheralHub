@@ -19,15 +19,15 @@ type Client struct {
 
 func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes []byte) {
 
-	s, err := net.ResolveUDPAddr("udp", string(client.Address))
-	c, err := net.DialUDP("udp", nil, s)
+	s, err := net.ResolveUDPAddr("udp", string(serverAddress)+":9900")
+	pc, err := net.ListenPacket("udp", string(client.Address)+":9900")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer pc.Close()
 
-	fmt.Printf("The UDP server is %s\n", c.RemoteAddr().String())
-	defer c.Close()
+	fmt.Printf("The UDP server is %s\n", string(client.Address)+":9900")
 
 	message := common.Message{
 		SenderAddress:   common.AddressToBytes(client.Address),
@@ -37,26 +37,26 @@ func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes [
 		EventEntity:     common.Client,
 	}
 	req := common.Encrypt(message, secretBytes)
-	_, err = c.Write(req)
+	_, err = pc.WriteTo(req, s)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	input := common.Input{}
 	input.Init()
+	buffer := make([]byte, 1024)
 	for {
-		buffer := make([]byte, 1024)
-		n, _, err := c.ReadFromUDP(buffer)
+		n, _, err := pc.ReadFrom(buffer)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		resp := common.Decrypt(buffer[0:n], secretBytes)
-		fmt.Printf("Reply: %v\n", resp)
-		if resp.SenderAddress == common.AddressToBytes(serverAddress) {
-			input.InputFromClient(resp)
-			client.Address = common.BytesToAddress(resp.ReceiverAddress)
-		}
+		fmt.Printf("Resp: %v , %v, %v\n", resp, resp.SenderAddress, common.AddressToBytes(serverAddress))
+		// if resp.SenderAddress == common.AddressToBytes(serverAddress) {
+		input.InputFromClient(resp)
+		// client.Address = common.BytesToAddress(resp.ReceiverAddress)
+		// }
 	}
 }
 
