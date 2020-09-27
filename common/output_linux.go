@@ -2,22 +2,7 @@
 
 package common
 
-import (
-	"fmt"
-)
-
-type Sender struct {
-	Address         string
-	Devices         []Device
-	Receivers       []*Receiver
-	CurrentReceiver *Receiver
-	Secret          Secret
-}
-
-type InternalMsg struct {
-	EventEntity EventEntity
-	Event       Event
-}
+import "fmt"
 
 func getEventFromKeycode(keycode uint, xeventType int) Event {
 	if keycode == 4 || keycode == 5 {
@@ -137,7 +122,7 @@ func getEventEntityFromKeyString(keyString string) EventEntity {
 
 }
 
-func ListenXEvent(com chan InternalMsg) {
+func Output(com chan InternalMsg) {
 	display := XOpenDisplay()
 	root := XDefaultRootWindow(display)
 	XGrabPointer(display, root)

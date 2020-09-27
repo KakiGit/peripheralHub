@@ -6,6 +6,7 @@ type Device string
 type Platform int
 type Event byte
 type EventEntity byte
+
 type Message struct {
 	SenderAddress    [4]byte
 	SenderPlatform   Platform
@@ -13,6 +14,11 @@ type Message struct {
 	ReceiverPlatform Platform
 	Event            Event
 	EventEntity      EventEntity
+}
+
+type InternalMsg struct {
+	EventEntity EventEntity
+	Event       Event
 }
 
 const (
