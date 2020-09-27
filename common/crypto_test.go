@@ -9,7 +9,7 @@ import (
 )
 
 func TestCrypto(t *testing.T) {
-	secret := "topSecret"
+	secret := Secret("topSecret")
 	encodedPwd := CreateEncodedSecret(secret)
 	fmt.Println(encodedPwd)
 	key := ReadSecret(encodedPwd)

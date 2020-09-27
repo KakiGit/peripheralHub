@@ -16,17 +16,17 @@ import (
 const nonceSize = 12
 const saltSize = 32
 
-func CreateEncodedSecret(password string) string {
+func CreateEncodedSecret(password Secret) Secret {
 	salt := make([]byte, saltSize)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		panic(err.Error())
 	}
 	key, _ := scrypt.Key([]byte(password), salt, 32768, 8, 1, 32)
 	encodedPwd := base64.StdEncoding.EncodeToString(key)
-	return encodedPwd
+	return Secret(encodedPwd)
 }
 
-func ReadSecret(encodedPwd string) []byte {
+func ReadSecret(encodedPwd Secret) []byte {
 	key, err := base64.StdEncoding.DecodeString(string(encodedPwd))
 	if err != nil {
 		panic(err.Error())
