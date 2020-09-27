@@ -62,6 +62,7 @@ func getEventEntityFromKeyString(keyString string) EventEntity {
 		"KP_Subtract": KeyNumPadSub,
 		"KP_Delete":   KeyNumPadDecimal,
 		"KP_Divide":   KeyNumPadDiv,
+		"grave":       KeyTilde,
 		"F1":          KeyF1,
 		"F2":          KeyF2,
 		"F3":          KeyF3,
