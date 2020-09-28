@@ -193,10 +193,6 @@ func (output *Output) OutputToServer() {
 			}
 		case MotionNotify:
 			x, y := GetCursorPosition(&event)
-			if x == xReset && y == yReset {
-				x = x + 1
-				y = y + 1
-			}
 			XTestGrabControl(output.display, True)
 			XTestFakeMotionEvent(output.display, 0, xReset, yReset, 0)
 			var tE XEvent
