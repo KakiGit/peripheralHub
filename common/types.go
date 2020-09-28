@@ -166,8 +166,15 @@ const (
 	KeyY
 	KeyZ
 	KeyLeftBracket
-	KeyBar
+	KeyBackSlash
 	KeyRightBracket
+	KeyMinus
+	KeyEqual
+	KeyApostrophe
+	KeySemicolon
+	KeyComma
+	KeyPeriod
+	KeySlash
 	KeyNumLock
 	KeyNumPad0
 	KeyNumPad1

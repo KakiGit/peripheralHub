@@ -76,6 +76,10 @@ func getKeyValue(key EventEntity) uintptr {
 		keyCode, _, _ := vkKeyScanA.Call(uintptr(char))
 		return keyCode
 	} else {
+		tmpVkKeyScan := func(char uintptr) uintptr {
+			keyCode, _, _ := vkKeyScanA.Call(uintptr(char))
+			return keyCode
+		}
 		return map[EventEntity]uintptr{
 			KeyBackspace:     0x08, // VK_BACK
 			KeyWinCmd:        0x5B, //VK_LWIN
@@ -144,6 +148,16 @@ func getKeyValue(key EventEntity) uintptr {
 			KeyMediaPrevious: 0xb1, // VK_MEDIA_PREV_TRACK
 			KeyMediaStop:     0xb2, // VK_MEDIA_STOP
 			KeyMediaPause:    0xb3, // VK_MEDIA_PLAY_PAUSE
+			KeyLeftBracket:   tmpVkKeyScan(91),
+			KeyBackSlash:     tmpVkKeyScan(92),
+			KeyRightBracket:  tmpVkKeyScan(93),
+			KeyMinus:         tmpVkKeyScan(45),
+			KeyEqual:         tmpVkKeyScan(61),
+			KeyApostrophe:    tmpVkKeyScan(39),
+			KeySemicolon:     tmpVkKeyScan(59),
+			KeyComma:         tmpVkKeyScan(44),
+			KeyPeriod:        tmpVkKeyScan(46),
+			KeySlash:         tmpVkKeyScan(92),
 		}[key]
 	}
 }
