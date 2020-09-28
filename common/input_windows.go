@@ -67,12 +67,12 @@ func getMouseEventID(button EventEntity, event Event) uintptr {
 func getKeyValue(key EventEntity) uintptr {
 	if key >= Key0 && key <= Key9 {
 		char := (key - Key0) + 48
-		fmt.Println(string(char))
+		// fmt.Println(string(char))
 		keyCode, _, _ := vkKeyScanA.Call(uintptr(char))
 		return keyCode
 	} else if key >= KeyA && key <= KeyZ {
 		char := (key - KeyA) + 97
-		fmt.Println(string(char))
+		// fmt.Println(string(char))
 		keyCode, _, _ := vkKeyScanA.Call(uintptr(char))
 		return keyCode
 	} else {
@@ -157,7 +157,7 @@ func getKeyValue(key EventEntity) uintptr {
 			KeySemicolon:     tmpVkKeyScan(59),
 			KeyComma:         tmpVkKeyScan(44),
 			KeyPeriod:        tmpVkKeyScan(46),
-			KeySlash:         tmpVkKeyScan(92),
+			KeySlash:         tmpVkKeyScan(47),
 		}[key]
 	}
 }
@@ -184,7 +184,7 @@ func (input *Input) MouseMove(x, y int) {
 
 func (input *Input) MouseScroll(lines int) {
 	x, y := input.GetCursorPos()
-	fmt.Println(x, y)
+	// fmt.Println(x, y)
 	mouseEvent.Call(getMouseEventID(MouseWheel, MouseWheelScrollUp), uintptr(x), uintptr(y), uintptr(lines))
 }
 
@@ -221,8 +221,8 @@ func (input *Input) InputFromClient(message Message) {
 	case MouseRelativeMove:
 		input.MouseMove(message.ExtraInfo[0], message.ExtraInfo[1])
 	case MouseWheelScrollUp:
-		input.MouseScroll(10)
+		input.MouseScroll(50)
 	case MouseWheelScrollDown:
-		input.MouseScroll(-10)
+		input.MouseScroll(-50)
 	}
 }
