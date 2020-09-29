@@ -2,7 +2,11 @@
 
 package common
 
-import "fmt"
+import (
+	"fmt"
+
+	evdev "github.com/gvalkov/golang-evdev"
+)
 
 type Output struct {
 	display *Display
@@ -10,26 +14,18 @@ type Output struct {
 	Com     chan InternalMsg
 }
 
-func getEventFromKeycode(keycode uint, xeventType int) Event {
-	if keycode == 4 {
-		return MouseWheelScrollUp
-	} else if keycode == 5 {
-		return MouseWheelScrollDown
-	}
-	return map[int]Event{
-		ButtonPress:   ButtonDown,
-		ButtonRelease: ButtonUp,
-	}[xeventType]
-}
+// func getEventEntityAndEvent(value int, eventType int) (EventEntity, Event) {
+// 	switch
+// }
 
-func getEventEntityFromMouseKeycode(keycode uint) EventEntity {
-	return map[uint]EventEntity{
-		1: MouseLeftButton,
-		2: MouseMiddleButton,
-		3: MouseRightButton,
-		4: MouseWheel,
-		5: MouseWheel,
-	}[keycode]
+func getEventEntityFromMouseKeycode(keycode uint) (EventEntity, bool) {
+	eventEntities := map[uint]EventEntity{
+		evdev.BTN_LEFT:   MouseLeftButton,
+		evdev.BTN_MIDDLE: MouseMiddleButton,
+		evdev.BTN_RIGHT:  MouseRightButton,
+	}
+	eventEntity, ok := eventEntities[keycode]
+	return eventEntity, ok
 }
 
 func getEventEntityFromKeyString(keyString string) EventEntity {
@@ -148,10 +144,10 @@ func (output *Output) Init() {
 }
 
 func (output *Output) OutputToServer() {
+	go grabMouseEvent(output.Com)
 	var event XEvent
 	xReset := 250
 	yReset := 200
-	XGrabPointer(output.display, output.root)
 	XGrabKeyboard(output.display, output.root)
 	XTestGrabControl(output.display, True)
 	XTestFakeMotionEvent(output.display, 0, xReset, yReset, 0)
@@ -179,30 +175,54 @@ func (output *Output) OutputToServer() {
 				EventEntity: getEventEntityFromKeyString(keystring),
 				Event:       ButtonUp,
 			}
-		case ButtonPress:
-			keycode := GetKeyCode(&event)
-			output.Com <- InternalMsg{
-				EventEntity: getEventEntityFromMouseKeycode(keycode),
-				Event:       getEventFromKeycode(keycode, ButtonPress),
-			}
-		case ButtonRelease:
-			keycode := GetKeyCode(&event)
-			output.Com <- InternalMsg{
-				EventEntity: getEventEntityFromMouseKeycode(keycode),
-				Event:       getEventFromKeycode(keycode, ButtonRelease),
-			}
-		case MotionNotify:
-			x, y := GetCursorPosition(&event)
-			XTestGrabControl(output.display, True)
-			XTestFakeMotionEvent(output.display, 0, xReset, yReset, 0)
-			var tE XEvent
-			XNextEvent(output.display, &tE)
-			XTestGrabControl(output.display, False)
-			output.Com <- InternalMsg{
-				EventEntity: MouseCursor,
-				Event:       MouseRelativeMove,
-				ExtraInfo:   [4]int{x - xReset, y - yReset},
+		}
+	}
+}
+
+func grabMouseEvent(com chan InternalMsg) {
+	devices, _ := evdev.ListInputDevices()
+
+	for _, dev := range devices {
+		fmt.Printf("%s %s %s\n", dev.Fn, dev.Name, dev.Phys)
+	}
+	device, _ := evdev.Open(devices[0].Fn)
+	device.SetRepeatRate(0, 0)
+	fmt.Println(device)
+	device.Grab()
+	defer device.Release()
+	for {
+		r, _ := device.Read()
+		internalMsg := InternalMsg{}
+		fmt.Println(r)
+		for _, ev := range r {
+			switch ev.Type {
+			case evdev.EV_REL:
+				if ev.Code == 8 {
+					internalMsg.EventEntity = MouseWheel
+					switch line := r[1].Value; {
+					case line > 0:
+						internalMsg.Event = MouseWheelScrollUp
+					case line < 0:
+						internalMsg.Event = MouseWheelScrollDown
+					}
+				} else if ev.Code == 0 || ev.Code == 1 {
+					internalMsg.EventEntity = MouseCursor
+					internalMsg.Event = MouseRelativeMove
+					internalMsg.ExtraInfo[ev.Code] = int(ev.Value)
+				}
+			case evdev.EV_KEY:
+				eventEntity, ok := getEventEntityFromMouseKeycode(uint(ev.Code))
+				if !ok {
+					continue
+				}
+				internalMsg.EventEntity = eventEntity
+				if ev.Value == 1 {
+					internalMsg.Event = ButtonDown
+				} else {
+					internalMsg.Event = ButtonUp
+				}
 			}
 		}
+		com <- internalMsg
 	}
 }
