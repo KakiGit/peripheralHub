@@ -66,6 +66,7 @@ const (
 	MouseWheelScrollUp
 	MouseWheelScrollDown
 	ServiceInit
+	ServiceHeartBeat
 )
 
 // ISO keyboard layout is implemented for now
