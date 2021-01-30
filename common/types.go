@@ -1,6 +1,7 @@
 package common
 
 import (
+	"crypto/rsa"
 	"strconv"
 	"strings"
 )
@@ -11,6 +12,10 @@ type Device string
 type Platform int
 type Event byte
 type EventEntity byte
+type EncryptionType byte
+type AESKey []byte
+type RSAPubKey rsa.PublicKey
+type RSAPriKey rsa.PrivateKey
 
 type Message struct {
 	SenderAddress    [4]byte
@@ -50,6 +55,11 @@ type InternalMsg struct {
 	Event       Event
 	ExtraInfo   [4]int
 }
+
+const (
+	AES EncryptionType = iota
+	RSA
+)
 
 const (
 	Linux Platform = iota
