@@ -31,9 +31,10 @@ type AESCrypto struct {
 }
 
 type RSACrypto struct {
-	publicKey       RSAPubKey
-	privateKey      RSAPriKey
-	targetPublicKey RSAPubKey
+	publicKey        RSAPubKey
+	PublicKeyComment string
+	privateKey       RSAPriKey
+	TargetPublicKey  RSAPubKey
 }
 
 func (aesCrypto *AESCrypto) CreateEncodedSecret(password Secret) Secret {
@@ -61,10 +62,11 @@ func (aesCrypto *AESCrypto) ReadSecret(encodedPwd Secret) {
 func (rsaCrypto *RSACrypto) ReadSecret(publicKeyPath string, privateKeyPath string) {
 	publicKeyData, err := ioutil.ReadFile(publicKeyPath)
 
-	parsed, _, _, _, err := ssh.ParseAuthorizedKey(publicKeyData)
+	parsed, comment, _, _, err := ssh.ParseAuthorizedKey(publicKeyData)
 	CheckError(err)
 	publicKey := parsed.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey)
 	rsaCrypto.publicKey = (RSAPubKey)(*publicKey)
+	rsaCrypto.PublicKeyComment = comment
 
 	privateKeyData, err := ioutil.ReadFile(privateKeyPath)
 	block, _ := pem.Decode(privateKeyData)
@@ -84,17 +86,25 @@ func (rsaCrypto *RSACrypto) ReadSecret(publicKeyPath string, privateKeyPath stri
 	rsaCrypto.privateKey = (RSAPriKey)(*privateKey)
 }
 
-func ReadAuthorizedKeys(autorizedKeysPath string) map[string]RSACrypto {
-	authorizedKeys := make(map[string]RSACrypto)
+func ReadAuthorizedKeys(autorizedKeysPath string) (map[string]RSAPubKey, []string) {
+	comments := []string{}
+	authorizedKeys := make(map[string]RSAPubKey)
 	data, err := ioutil.ReadFile(autorizedKeysPath)
 	CheckError(err)
+	var parsed ssh.PublicKey
+	var comment string
+	for {
+		parsed, comment, _, data, err = ssh.ParseAuthorizedKey(data)
+		comments = append(comments, comment)
+		CheckError(err)
+		publicKey := parsed.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey)
+		authorizedKeys[comment] = (RSAPubKey)(*publicKey)
+		if len(data) == 0 {
+			break
+		}
+	}
 
-	parsed, comment, _, data, err := ssh.ParseAuthorizedKey(data)
-	CheckError(err)
-	publicKey := parsed.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey)
-	authorizedKeys[comment] = RSACrypto{publicKey: (RSAPubKey)(*publicKey)}
-
-	return authorizedKeys
+	return authorizedKeys, comments
 }
 
 func (aesCrypto *AESCrypto) Encrypt(msg Message) []byte {
@@ -124,7 +134,7 @@ func (rsaCrypto *RSACrypto) Encrypt(msg Message) []byte {
 	label := []byte("peripheralHub")
 
 	encodedMsg, signiture := rsaCrypto.EncodeMessage(msg)
-	encryptedMsg, err := rsa.EncryptOAEP(sha256.New(), rng, (*rsa.PublicKey)(&rsaCrypto.targetPublicKey), encodedMsg, label)
+	encryptedMsg, err := rsa.EncryptOAEP(sha256.New(), rng, (*rsa.PublicKey)(&rsaCrypto.TargetPublicKey), encodedMsg, label)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error from encryption: %s\n", err)
 		panic(err)
@@ -202,7 +212,7 @@ func (rsaCrypto *RSACrypto) DecodeMessage(encodedMsg []byte, signiture []byte) M
 		fmt.Println(err)
 	}
 	msgHashSum := msgHash.Sum(nil)
-	err = rsa.VerifyPSS((*rsa.PublicKey)(&rsaCrypto.targetPublicKey), crypto.SHA256, msgHashSum, signiture, pssOptions)
+	err = rsa.VerifyPSS((*rsa.PublicKey)(&rsaCrypto.TargetPublicKey), crypto.SHA256, msgHashSum, signiture, pssOptions)
 	if err != nil {
 		fmt.Println(err)
 		return Message{}

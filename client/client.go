@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/kaki/peripheralHub/common"
+	"github.com/KakiGit/peripheralHub/common"
 )
 
 func action(msg string) bool {
@@ -13,66 +13,55 @@ func action(msg string) bool {
 }
 
 type Client struct {
-	Address  common.Address
-	Secret   common.Secret
-	Platform common.Platform
+	Address   common.Address
+	ClientId  string
+	ServerId  string
+	Port      string
+	rsaCrypto common.RSACrypto
+	Network   string
 }
 
-func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes []byte) {
+func (client *Client) SyncWithServer(serverAddress common.Address) {
 
-	s, err := net.ResolveUDPAddr("udp", string(serverAddress)+":9900")
-	pc, err := net.ListenPacket("udp", string(client.Address)+":9900")
+	fullServerAddress := net.JoinHostPort(string(serverAddress), client.Port)
+	conn, err := net.Dial(client.Network, fullServerAddress)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer pc.Close()
+	defer conn.Close()
 
-	fmt.Printf("The UDP server is %s\n", string(client.Address)+":9900")
+	fmt.Printf("The TCP connection is %s\n", conn.LocalAddr().String())
 
-	message := common.Message{
-		SenderAddress:   common.AddressToBytes(client.Address),
-		SenderPlatform:  client.Platform,
-		ReceiverAddress: common.AddressToBytes(serverAddress),
-		Event:           common.ServiceInit,
-		EventEntity:     common.Client,
-	}
-	req := common.Encrypt(message, secretBytes)
-	_, err = pc.WriteTo(req, s)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	input := common.Input{}
 	input.Init()
 	buffer := make([]byte, 1024)
 	// heartbeat
-	go func() {
+	go func(c net.Conn) {
 		for {
 			message := common.Message{
 				SenderAddress:   common.AddressToBytes(client.Address),
-				SenderPlatform:  client.Platform,
+				SenderId:        client.ClientId,
 				ReceiverAddress: common.AddressToBytes(serverAddress),
+				ReceiverId:      client.ServerId,
 				Event:           common.ServiceHeartBeat,
 				EventEntity:     common.Client,
 			}
-			req := common.Encrypt(message, secretBytes)
-			_, err = pc.WriteTo(req, s)
+			msg := client.rsaCrypto.Encrypt(message)
 			if err != nil {
 				fmt.Println(err)
 			}
+			c.Write(msg)
 			time.Sleep(60 * time.Second)
 		}
-	}()
+	}(conn)
 	for {
-		start := time.Now()
-		err := pc.SetReadDeadline(start.Add(time.Second * 60))
-		n, _, err := pc.ReadFrom(buffer)
+		n, err := conn.Read(buffer)
 		if err != nil {
 			// fmt.Println(err)
 			continue
 		}
-		resp := common.Decrypt(buffer[0:n], secretBytes)
+		resp := client.rsaCrypto.Decrypt(buffer[0:n])
 		// fmt.Printf("Resp: %v , %v, %v\n", resp, resp.SenderAddress, common.AddressToBytes(serverAddress))
 		// if resp.SenderAddress == common.AddressToBytes(serverAddress) {
 		input.InputFromClient(resp)
@@ -82,7 +71,6 @@ func (client *Client) SyncWithServer(serverAddress common.Address, secretBytes [
 }
 
 func (client *Client) Init(serverAddress common.Address) {
-	secretBytes := common.ReadSecret(client.Secret)
 
-	client.SyncWithServer(serverAddress, secretBytes)
+	client.SyncWithServer(serverAddress)
 }

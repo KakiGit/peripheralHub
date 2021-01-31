@@ -19,8 +19,10 @@ type RSAPriKey rsa.PrivateKey
 
 type Message struct {
 	SenderAddress    [4]byte
+	SenderId         string
 	SenderPlatform   Platform
 	ReceiverAddress  [4]byte
+	ReceiverId       string
 	ReceiverPlatform Platform
 	Event            Event
 	EventEntity      EventEntity

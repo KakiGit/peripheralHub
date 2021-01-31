@@ -1,14 +1,13 @@
 package common
 
 import (
-	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"golang.org/x/crypto/ssh"
 )
 
 func TestAES(t *testing.T) {
@@ -56,40 +55,35 @@ func TestAES(t *testing.T) {
 }
 
 func TestRSA(t *testing.T) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	sshDir := filepath.Join(homeDir, ".ssh")
+	clientPublicKeyPath := filepath.Join(sshDir, "id_rsa_test_client.pub")
+	clientPrivateKeyPath := filepath.Join(sshDir, "id_rsa_test_client")
+	serverPublicKeyPath := filepath.Join(sshDir, "id_rsa_test_server.pub")
+	serverPrivateKeyPath := filepath.Join(sshDir, "id_rsa_test_server")
 
 	clientRsaCrypto := RSACrypto{}
-	clientRsaCrypto.ReadSecret("/home/kaki/.ssh/id_rsa_test_client.pub", "/home/kaki/.ssh/id_rsa_test_client")
-	publicKeyData, err := ioutil.ReadFile("/home/kaki/.ssh/id_rsa_test_server.pub")
-	if err != nil {
-		fmt.Println(err)
-	}
-	parsed, _, _, _, err := ssh.ParseAuthorizedKey(publicKeyData)
-	if err != nil {
-		fmt.Println(err)
-	}
-	publicKey := parsed.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey)
-	clientRsaCrypto.targetPublicKey = (RSAPubKey)(*publicKey)
+	clientRsaCrypto.ReadSecret(clientPublicKeyPath, clientPrivateKeyPath)
+	publicKey, serverName := ReadAuthorizedKeys(serverPublicKeyPath)
+	clientRsaCrypto.TargetPublicKey = publicKey[serverName[0]]
 
 	serverRsaCrypto := RSACrypto{}
-	serverRsaCrypto.ReadSecret("/home/kaki/.ssh/id_rsa_test_server.pub", "/home/kaki/.ssh/id_rsa_test_server")
-	publicKeyData, err = ioutil.ReadFile("/home/kaki/.ssh/id_rsa_test_client.pub")
-	if err != nil {
-		fmt.Println(err)
-	}
-	parsed, _, _, _, err = ssh.ParseAuthorizedKey(publicKeyData)
-	if err != nil {
-		fmt.Println(err)
-	}
-	publicKey = parsed.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey)
-	serverRsaCrypto.targetPublicKey = (RSAPubKey)(*publicKey)
+	serverRsaCrypto.ReadSecret(serverPublicKeyPath, serverPrivateKeyPath)
+	publicKey, clientName := ReadAuthorizedKeys(clientPublicKeyPath)
+	serverRsaCrypto.TargetPublicKey = publicKey[clientName[0]]
 
 	msgs := []Message{}
 	for i := 0; i <= 9; i++ {
 		for j := 0; j <= 123; j++ {
 			nMsg := Message{
 				SenderAddress:    [4]byte{192, 168, 0, 1},
+				SenderId:         serverName[0],
 				SenderPlatform:   Linux,
 				ReceiverAddress:  [4]byte{192, 168, 0, 2},
+				ReceiverId:       clientName[0],
 				ReceiverPlatform: Windows,
 				Event:            Event(j),
 				EventEntity:      EventEntity(i),
@@ -106,7 +100,9 @@ func TestRSA(t *testing.T) {
 			go func(wg *sync.WaitGroup, c chan int, msg Message) {
 				wg.Add(1)
 				encryptedMsg := serverRsaCrypto.Encrypt(msg)
+				fmt.Println(string(encryptedMsg))
 				decryptedMsg := clientRsaCrypto.Decrypt(encryptedMsg)
+				fmt.Println(decryptedMsg)
 				if !cmp.Equal(decryptedMsg, msg) {
 					t.Logf("msg: %v\nencryptedMsg: %x\ndecrypted: %v\n",
 						msg, encryptedMsg, decryptedMsg)
